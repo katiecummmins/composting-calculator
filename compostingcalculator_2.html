@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Food Scrap Composting Impact Calculator</title>
+<style>
+  :root{
+    --green-900:#1b3a2b;
+    --green-700:#2f6b45;
+    --green-600:#3a8256;
+    --green-100:#e7f2ea;
+    --amber-600:#b5680a;
+    --amber-100:#fbeed9;
+    --ink-900:#1f2430;
+    --ink-600:#4b5263;
+    --ink-400:#7a8194;
+    --border:#dfe3e8;
+    --bg:#f6f7f9;
+    --card:#ffffff;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink-900);
+    line-height:1.4;
+  }
+  .wrap{
+    max-width:1280px;
+    margin:0 auto;
+    padding:20px 24px 40px;
+  }
+  header{
+    margin-bottom:18px;
+  }
+  h1{
+    font-size:1.5rem;
+    margin:0 0 4px;
+    font-weight:700;
+  }
+  .subtitle{
+    color:var(--ink-600);
+    font-size:0.92rem;
+    margin:0;
+  }
+  .grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:20px;
+    align-items:start;
+  }
+  @media (max-width:920px){
+    .grid{grid-template-columns:1fr;}
+  }
+  .card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    padding:18px 20px;
+    margin-bottom:18px;
+  }
+  .card h2{
+    font-size:1.05rem;
+    margin:0 0 4px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .card .desc{
+    color:var(--ink-600);
+    font-size:0.85rem;
+    margin:0 0 14px;
+  }
+  .field-row{
+    display:grid;
+    grid-template-columns:1fr 130px;
+    gap:10px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .field-row label{
+    font-size:0.88rem;
+    color:var(--ink-900);
+  }
+  .field-row .hint{
+    display:block;
+    font-size:0.76rem;
+    color:var(--ink-400);
+    margin-top:1px;
+  }
+  input[type=number]{
+    width:100%;
+    padding:7px 9px;
+    border:1px solid var(--border);
+    border-radius:7px;
+    font-size:0.92rem;
+    text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  input[type=number]:focus{
+    outline:2px solid var(--green-600);
+    outline-offset:1px;
+  }
+  input[type=range]{
+    width:100%;
+    accent-color:var(--green-600);
+  }
+  .range-row{
+    display:grid;
+    grid-template-columns:1fr 60px;
+    gap:10px;
+    align-items:center;
+    margin-bottom:10px;
+  }
+  .range-value{
+    text-align:right;
+    font-size:0.88rem;
+    font-variant-numeric:tabular-nums;
+  }
+  .unit-toggle{
+    display:inline-flex;
+    border:1px solid var(--border);
+    border-radius:7px;
+    overflow:hidden;
+    font-size:0.8rem;
+  }
+  .unit-toggle button{
+    border:none;
+    background:var(--card);
+    padding:5px 10px;
+    cursor:pointer;
+    color:var(--ink-600);
+  }
+  .unit-toggle button.active{
+    background:var(--green-600);
+    color:#fff;
+  }
+  hr.sep{
+    border:none;
+    border-top:1px solid var(--border);
+    margin:14px 0;
+  }
+  table.cost-table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:0.88rem;
+  }
+  table.cost-table th{
+    text-align:right;
+    font-size:0.75rem;
+    color:var(--ink-400);
+    font-weight:600;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    padding-bottom:6px;
+  }
+  table.cost-table th:first-child{text-align:left;}
+  table.cost-table td{
+    padding:6px 4px;
+    text-align:right;
+    border-top:1px solid var(--border);
+  }
+  table.cost-table td:first-child{
+    text-align:left;
+    color:var(--ink-900);
+  }
+  table.cost-table tr.total td{
+    font-weight:700;
+    border-top:2px solid var(--ink-900);
+    padding-top:9px;
+  }
+  .result-box{
+    border-radius:var(--radius);
+    padding:14px 16px;
+    margin-top:12px;
+  }
+  .result-box.funded{
+    background:var(--green-100);
+    border:1px solid #bfe0cc;
+  }
+  .result-box.steady{
+    background:var(--amber-100);
+    border:1px solid #efd4a6;
+  }
+  .result-box .label{
+    font-size:0.78rem;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    font-weight:700;
+    margin-bottom:2px;
+  }
+  .result-box.funded .label{color:var(--green-700);}
+  .result-box.steady .label{color:var(--amber-600);}
+  .result-box .big{
+    font-size:1.5rem;
+    font-weight:700;
+    margin:2px 0;
+  }
+  .result-box .note{
+    font-size:0.8rem;
+    color:var(--ink-600);
+  }
+  .impact-hero{
+    background:linear-gradient(135deg,var(--green-700),var(--green-900));
+    color:#fff;
+    border-radius:var(--radius);
+    padding:20px;
+    text-align:center;
+    margin-bottom:14px;
+  }
+  .impact-hero .num{
+    font-size:2.4rem;
+    font-weight:800;
+    line-height:1.1;
+  }
+  .impact-hero .lbl{
+    font-size:0.85rem;
+    opacity:0.9;
+    margin-top:2px;
+  }
+  .equiv-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+  }
+  @media (max-width:600px){
+    .equiv-grid{grid-template-columns:1fr;}
+  }
+  .equiv-card{
+    background:var(--green-100);
+    border:1px solid #cfe6d8;
+    border-radius:8px;
+    padding:12px 10px;
+    text-align:center;
+  }
+  .equiv-card .icon{font-size:1.4rem;}
+  .equiv-card .num{
+    font-size:1.15rem;
+    font-weight:700;
+    color:var(--green-900);
+    margin:2px 0;
+  }
+  .equiv-card .lbl{
+    font-size:0.75rem;
+    color:var(--ink-600);
+  }
+  footer{
+    margin-top:10px;
+    font-size:0.74rem;
+    color:var(--ink-400);
+    border-top:1px solid var(--border);
+    padding-top:12px;
+  }
+  footer p{margin:0 0 6px;}
+  .badge{
+    display:inline-block;
+    background:var(--green-600);
+    color:#fff;
+    font-size:0.7rem;
+    font-weight:700;
+    padding:2px 7px;
+    border-radius:5px;
+    vertical-align:middle;
+  }
+  .subsidy-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:10px;
+  }
+  .subsidy-row .field-row{flex:1; margin-bottom:0;}
+  .pdf-btn{
+    background:var(--green-600);
+    color:#fff;
+    border:none;
+    border-radius:7px;
+    padding:9px 16px;
+    font-size:0.9rem;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .pdf-btn:hover{background:var(--green-700);}
+  .pdf-btn:disabled{background:var(--ink-400); cursor:not-allowed;}
+  #report-template{
+    display:none;
+  }
+  #report-template .rt-page{
+    width:680px;
+    padding:32px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    color:var(--ink-900);
+  }
+  #report-template h1{font-size:1.3rem; margin:0 0 2px;}
+  #report-template .rt-meta{color:var(--ink-600); font-size:0.85rem; margin:0 0 18px;}
+  #report-template h2{font-size:1rem; margin:18px 0 8px; border-bottom:1px solid var(--border); padding-bottom:4px;}
+  #report-template table{width:100%; border-collapse:collapse; font-size:0.88rem; margin-bottom:10px;}
+  #report-template td{padding:4px 2px; border-top:1px solid var(--border);}
+  #report-template td:first-child{color:var(--ink-600);}
+  #report-template td:last-child{text-align:right; font-variant-numeric:tabular-nums;}
+  #report-template tr.rt-total td{font-weight:700; border-top:2px solid var(--ink-900);}
+  #report-template .rt-equiv{display:flex; gap:16px; margin-top:6px;}
+  #report-template .rt-equiv div{flex:1; text-align:center; background:var(--green-100); border-radius:8px; padding:10px;}
+  #report-template .rt-equiv .rt-num{font-size:1.05rem; font-weight:700; color:var(--green-900);}
+  #report-template .rt-equiv .rt-lbl{font-size:0.72rem; color:var(--ink-600);}
+  #report-template .rt-foot{margin-top:20px; font-size:0.7rem; color:var(--ink-400); border-top:1px solid var(--border); padding-top:10px;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Food Scrap Composting: Cost &amp; Impact Calculator</h1>
+    <p class="subtitle">Estimate what adding a food scrap composting service would cost — and what it would keep out of the landfill. Every number below is editable; the results update as you type.</p>
+  </header>
+
+  <div class="card" id="report-card">
+    <h2>Report</h2>
+    <p class="desc">Enter a business name, then save a PDF summary of the numbers above.</p>
+    <div class="field-row" style="grid-template-columns:1fr 220px;">
+      <label for="report-business">Business / site name</label>
+      <input type="text" id="report-business" placeholder="e.g. restaurant name" style="text-align:left;">
+    </div>
+    <button type="button" id="save-pdf-btn" class="pdf-btn">Save PDF Report</button>
+  </div>
+
+  <div class="grid">
+    <!-- LEFT COLUMN: COST COMPARISON -->
+    <div>
+      <div class="card">
+        <h2>Current monthly waste costs</h2>
+        <p class="desc">What the restaurant pays today, per month, for each hauling service.</p>
+
+        <div class="field-row">
+          <label for="cur-trash">Trash / landfill</label>
+          <input type="number" id="cur-trash" value="450" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label for="cur-recycle">Recycling</label>
+          <input type="number" id="cur-recycle" value="80" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label for="cur-grease">Grease / used oil</label>
+          <input type="number" id="cur-grease" value="60" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label for="cur-food">Food scraps <span class="hint">New service — not yet in place</span></label>
+          <input type="number" id="cur-food" value="0" min="0" step="10" disabled>
+        </div>
+
+        <table class="cost-table">
+          <tr class="total"><td>Current total / month</td><td id="cur-total">$0</td></tr>
+        </table>
+      </div>
+
+      <div class="card">
+        <h2>With composting added</h2>
+        <p class="desc">Diverting food waste usually shrinks the trash a restaurant needs hauled — adjust the reduction below to reflect that.</p>
+
+        <div class="range-row">
+          <label for="trash-reduction">Trash cost/frequency reduction from diverting food waste</label>
+        </div>
+        <div class="range-row">
+          <input type="range" id="trash-reduction" min="0" max="60" value="20" step="1">
+          <div class="range-value"><span id="trash-reduction-val">20</span>%</div>
+        </div>
+
+        <div class="field-row">
+          <label for="new-trash">New trash cost <span class="hint">Auto-calculated from reduction; edit to override</span></label>
+          <input type="number" id="new-trash" value="360" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label for="new-recycle">Recycling</label>
+          <input type="number" id="new-recycle" value="80" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label for="new-grease">Grease / used oil</label>
+          <input type="number" id="new-grease" value="60" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label for="new-food">Food scraps <span class="hint">New composting service cost</span></label>
+          <input type="number" id="new-food" value="150" min="0" step="10">
+        </div>
+
+        <table class="cost-table">
+          <tr class="total"><td>New total / month (steady state)</td><td id="new-total">$0</td></tr>
+        </table>
+
+        <hr class="sep">
+
+        <h2 style="font-size:0.95rem;">Grant funding <span class="badge">up to $1,000</span></h2>
+        <p class="desc">Grant funding can offset the food scraps line for the first few months.</p>
+        <div class="subsidy-row">
+          <div class="field-row" style="grid-template-columns:1fr 90px;">
+            <label for="subsidy-total">Total subsidy</label>
+            <input type="number" id="subsidy-total" value="1000" min="0" max="1000" step="50">
+          </div>
+          <div class="field-row" style="grid-template-columns:1fr 90px;">
+            <label for="subsidy-months">Funded months</label>
+            <input type="number" id="subsidy-months" value="4" min="1" max="12" step="1">
+          </div>
+        </div>
+
+        <div class="result-box funded">
+          <div class="label">Months 1–<span id="funded-month-count">4</span> · with grant funding</div>
+          <div class="big" id="funded-diff">+$0 / month</div>
+          <div class="note" id="funded-note">New total after subsidy: $0/mo vs. current $0/mo</div>
+        </div>
+        <div class="result-box steady">
+          <div class="label">After funding ends · ongoing cost</div>
+          <div class="big" id="steady-diff">+$0 / month</div>
+          <div class="note" id="steady-note">New total: $0/mo vs. current $0/mo</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN: ENVIRONMENTAL IMPACT -->
+    <div>
+      <div class="card">
+        <h2>Food waste diverted</h2>
+        <p class="desc">Estimated amount of food waste being sent to composting instead of the landfill.</p>
+
+        <div class="field-row">
+          <label for="waste-amount">Amount diverted, per month</label>
+          <input type="number" id="waste-amount" value="800" min="0" step="10">
+        </div>
+        <div class="field-row">
+          <label>Unit</label>
+          <div class="unit-toggle">
+            <button type="button" id="unit-lbs" class="active">lbs</button>
+            <button type="button" id="unit-tons">tons</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Estimated climate impact</h2>
+        <p class="desc">Based on published EPA emission factors for methane avoided when food waste is diverted from landfill (see footnote).</p>
+
+        <div class="impact-hero">
+          <div class="num" id="co2-annual">0</div>
+          <div class="lbl">metric tons CO<sub>2</sub>e avoided per year</div>
+        </div>
+        <p class="desc" style="text-align:center;margin-bottom:14px;">
+          = <span id="co2-monthly">0</span> metric tons CO<sub>2</sub>e avoided per month
+        </p>
+
+        <div class="equiv-grid">
+          <div class="equiv-card">
+            <div class="icon">🚗</div>
+            <div class="num" id="equiv-miles">0</div>
+            <div class="lbl">miles driven avoided (per year)</div>
+          </div>
+          <div class="equiv-card">
+            <div class="icon">🏠</div>
+            <div class="num" id="equiv-homes">0</div>
+            <div class="lbl">homes' electricity use for a year</div>
+          </div>
+          <div class="equiv-card">
+            <div class="icon">🚙</div>
+            <div class="num" id="equiv-cars">0</div>
+            <div class="lbl">cars taken off the road for a year</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <p><strong>About these estimates.</strong> Cost figures are planning estimates based on the numbers entered above; actual hauler pricing varies by contract and location. Trash reduction is applied as a percentage of the current trash cost and can be overridden directly.</p>
+    <p><strong>Emission factor source.</strong> Climate impact is calculated using the U.S. EPA's estimate that landfilling one short ton (2,000 lbs) of food waste generates approximately 0.83 metric tons of CO&#8322;e in fugitive methane emissions over its decomposition period — diverting that ton to composting is treated as avoiding those emissions. Source: U.S. EPA, "Quantifying Methane Emissions from Landfilled Food Waste" (Oct. 2023), epa.gov/system/files/documents/2023-10/food-waste-landfill-methane-10-8-23-final_508-compliant.pdf. Equivalency conversions (miles driven, home electricity use, vehicles per year) use EPA's Greenhouse Gas Equivalencies Calculator methodology, epa.gov/energy/greenhouse-gas-equivalencies-calculator-calculations-and-references. Figures are estimates for illustrative purposes, not a certified carbon accounting.</p>
+  </footer>
+</div>
+
+<div id="report-template">
+  <div class="rt-page">
+    <h1 id="rt-title">Food Scrap Composting: Cost &amp; Impact Report</h1>
+    <p class="rt-meta" id="rt-meta"></p>
+
+    <h2>Monthly cost comparison</h2>
+    <table>
+      <tr><td>Current total / month</td><td id="rt-cur-total"></td></tr>
+      <tr><td>New total / month (steady state)</td><td id="rt-new-total"></td></tr>
+      <tr class="rt-total"><td>Months 1&ndash;<span id="rt-funded-months"></span>, with grant funding</td><td id="rt-funded-diff"></td></tr>
+      <tr class="rt-total"><td>After funding ends, ongoing</td><td id="rt-steady-diff"></td></tr>
+    </table>
+
+    <h2>Food waste diverted</h2>
+    <table>
+      <tr><td>Amount diverted, per month</td><td id="rt-waste-amount"></td></tr>
+    </table>
+
+    <h2>Estimated climate impact</h2>
+    <table>
+      <tr><td>Metric tons CO<sub>2</sub>e avoided per year</td><td id="rt-co2-annual"></td></tr>
+      <tr><td>Metric tons CO<sub>2</sub>e avoided per month</td><td id="rt-co2-monthly"></td></tr>
+    </table>
+    <div class="rt-equiv">
+      <div><div class="rt-num" id="rt-equiv-miles"></div><div class="rt-lbl">miles driven avoided/yr</div></div>
+      <div><div class="rt-num" id="rt-equiv-homes"></div><div class="rt-lbl">homes' electricity/yr</div></div>
+      <div><div class="rt-num" id="rt-equiv-cars"></div><div class="rt-lbl">cars off the road/yr</div></div>
+    </div>
+
+    <div class="rt-foot">
+      Cost figures are planning estimates; actual hauler pricing varies by contract and location. Climate impact is calculated using the U.S. EPA's estimate that landfilling one short ton of food waste generates approximately 0.83 metric tons of CO&#8322;e in fugitive methane emissions; diverting that ton to composting is treated as avoiding those emissions. Source: U.S. EPA, "Quantifying Methane Emissions from Landfilled Food Waste" (Oct. 2023). Equivalency conversions use EPA's Greenhouse Gas Equivalencies Calculator methodology. Figures are estimates for illustrative purposes, not a certified carbon accounting.
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script>
+(function(){
+  const $ = id => document.getElementById(id);
+
+  // ---- Cost comparison ----
+  const curTrash = $('cur-trash'), curRecycle = $('cur-recycle'), curGrease = $('cur-grease');
+  const trashReduction = $('trash-reduction'), trashReductionVal = $('trash-reduction-val');
+  const newTrash = $('new-trash'), newRecycle = $('new-recycle'), newGrease = $('new-grease'), newFood = $('new-food');
+  const subsidyTotal = $('subsidy-total'), subsidyMonths = $('subsidy-months');
+
+  let trashManuallyEdited = false;
+  newTrash.addEventListener('input', () => { trashManuallyEdited = true; render(); });
+  trashReduction.addEventListener('input', () => { trashManuallyEdited = false; render(); });
+
+  function num(el){
+    const v = parseFloat(el.value);
+    return isNaN(v) ? 0 : v;
+  }
+
+  function fmtUSD(v){
+    const sign = v < 0 ? '-' : '';
+    return sign + '$' + Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0});
+  }
+  function fmtUSDSigned(v){
+    const sign = v > 0 ? '+' : (v < 0 ? '-' : '');
+    return sign + '$' + Math.abs(v).toLocaleString(undefined,{maximumFractionDigits:0});
+  }
+
+  const state = {};
+
+  function render(){
+    // current
+    const cTrash = num(curTrash), cRecycle = num(curRecycle), cGrease = num(curGrease);
+    const currentTotal = cTrash + cRecycle + cGrease + 0;
+    $('cur-total').textContent = fmtUSD(currentTotal);
+
+    // new trash: auto from reduction unless manually overridden
+    const reductionPct = num(trashReduction);
+    trashReductionVal.textContent = reductionPct;
+    if (!trashManuallyEdited){
+      newTrash.value = Math.round(cTrash * (1 - reductionPct/100));
+    }
+
+    const nTrash = num(newTrash), nRecycle = num(newRecycle), nGrease = num(newGrease), nFood = num(newFood);
+    const newTotalSteady = nTrash + nRecycle + nGrease + nFood;
+    $('new-total').textContent = fmtUSD(newTotalSteady);
+
+    // subsidy
+    const subTotal = Math.min(1000, Math.max(0, num(subsidyTotal)));
+    const subMonths = Math.max(1, num(subsidyMonths));
+    const subsidyPerMonth = subTotal / subMonths;
+    const foodDuringFunding = Math.max(0, nFood - subsidyPerMonth);
+    const newTotalFunded = nTrash + nRecycle + nGrease + foodDuringFunding;
+
+    $('funded-month-count').textContent = subMonths;
+    const fundedDiff = newTotalFunded - currentTotal;
+    $('funded-diff').textContent = fmtUSDSigned(fundedDiff) + ' / month';
+    $('funded-note').textContent = `New total with funding: ${fmtUSD(newTotalFunded)}/mo vs. current ${fmtUSD(currentTotal)}/mo`;
+
+    const steadyDiff = newTotalSteady - currentTotal;
+    $('steady-diff').textContent = fmtUSDSigned(steadyDiff) + ' / month';
+    $('steady-note').textContent = `New total, ongoing: ${fmtUSD(newTotalSteady)}/mo vs. current ${fmtUSD(currentTotal)}/mo`;
+
+    state.currentTotal = currentTotal;
+    state.newTotalSteady = newTotalSteady;
+    state.subMonths = subMonths;
+    state.fundedDiff = fundedDiff;
+    state.steadyDiff = steadyDiff;
+
+    renderImpact();
+  }
+
+  [curTrash, curRecycle, curGrease, newRecycle, newGrease, newFood, subsidyTotal, subsidyMonths].forEach(el=>{
+    el.addEventListener('input', render);
+  });
+
+  // ---- Environmental impact ----
+  const wasteAmount = $('waste-amount');
+  const unitLbsBtn = $('unit-lbs'), unitTonsBtn = $('unit-tons');
+  let unit = 'lbs';
+  const EMISSION_FACTOR_PER_SHORT_TON = 0.83; // MTCO2e avoided per short ton diverted (EPA, see footnote)
+  const MILES_PER_MTCO2E = 1 / 3.93e-4;   // EPA GHG Equivalencies Calculator
+  const HOMES_PER_MTCO2E = 1 / 4.798;     // EPA GHG Equivalencies Calculator
+  const CARS_PER_MTCO2E = 1 / 4.29;       // EPA GHG Equivalencies Calculator
+
+  unitLbsBtn.addEventListener('click', ()=>{
+    if (unit === 'tons'){
+      wasteAmount.value = Math.round(num(wasteAmount) * 2000);
+    }
+    unit = 'lbs';
+    unitLbsBtn.classList.add('active'); unitTonsBtn.classList.remove('active');
+    render();
+  });
+  unitTonsBtn.addEventListener('click', ()=>{
+    if (unit === 'lbs'){
+      wasteAmount.value = +(num(wasteAmount) / 2000).toFixed(2);
+    }
+    unit = 'tons';
+    unitTonsBtn.classList.add('active'); unitLbsBtn.classList.remove('active');
+    render();
+  });
+  wasteAmount.addEventListener('input', render);
+
+  function renderImpact(){
+    const amt = num(wasteAmount);
+    const tonsPerMonth = unit === 'lbs' ? amt / 2000 : amt;
+    const co2Monthly = tonsPerMonth * EMISSION_FACTOR_PER_SHORT_TON;
+    const co2Annual = co2Monthly * 12;
+
+    $('co2-annual').textContent = co2Annual.toLocaleString(undefined,{maximumFractionDigits:1});
+    $('co2-monthly').textContent = co2Monthly.toLocaleString(undefined,{maximumFractionDigits:2});
+
+    $('equiv-miles').textContent = Math.round(co2Annual * MILES_PER_MTCO2E).toLocaleString();
+    $('equiv-homes').textContent = (co2Annual * HOMES_PER_MTCO2E).toLocaleString(undefined,{maximumFractionDigits:1});
+    $('equiv-cars').textContent = (co2Annual * CARS_PER_MTCO2E).toLocaleString(undefined,{maximumFractionDigits:1});
+
+    state.wasteAmount = amt;
+    state.wasteUnit = unit;
+    state.co2Annual = co2Annual;
+    state.co2Monthly = co2Monthly;
+    state.equivMiles = Math.round(co2Annual * MILES_PER_MTCO2E);
+    state.equivHomes = co2Annual * HOMES_PER_MTCO2E;
+    state.equivCars = co2Annual * CARS_PER_MTCO2E;
+  }
+
+  // ---- PDF report ----
+  const reportBusiness = $('report-business');
+  const savePdfBtn = $('save-pdf-btn');
+
+  function fmtNum(v, digits){
+    return v.toLocaleString(undefined,{maximumFractionDigits:digits});
+  }
+
+  savePdfBtn.addEventListener('click', ()=>{
+    const businessName = reportBusiness.value.trim();
+    const today = new Date();
+    const dateStr = today.toLocaleDateString(undefined,{year:'numeric',month:'long',day:'numeric'});
+
+    $('rt-title').textContent = businessName
+      ? `Food Scrap Composting: Cost & Impact Report — ${businessName}`
+      : 'Food Scrap Composting: Cost & Impact Report';
+    $('rt-meta').textContent = `Prepared ${dateStr}`;
+
+    $('rt-cur-total').textContent = fmtUSD(state.currentTotal);
+    $('rt-new-total').textContent = fmtUSD(state.newTotalSteady);
+    $('rt-funded-months').textContent = state.subMonths;
+    $('rt-funded-diff').textContent = fmtUSDSigned(state.fundedDiff) + ' / month';
+    $('rt-steady-diff').textContent = fmtUSDSigned(state.steadyDiff) + ' / month';
+
+    $('rt-waste-amount').textContent = fmtNum(state.wasteAmount, 2) + ' ' + state.wasteUnit + ' / month';
+    $('rt-co2-annual').textContent = fmtNum(state.co2Annual, 1);
+    $('rt-co2-monthly').textContent = fmtNum(state.co2Monthly, 2);
+    $('rt-equiv-miles').textContent = fmtNum(state.equivMiles, 0);
+    $('rt-equiv-homes').textContent = fmtNum(state.equivHomes, 1);
+    $('rt-equiv-cars').textContent = fmtNum(state.equivCars, 1);
+
+    const template = $('report-template');
+    const page = template.querySelector('.rt-page');
+    template.style.display = 'block';
+
+    const fileSlug = businessName ? businessName.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'') : 'composting-report';
+    const filename = `${fileSlug}-${today.toISOString().slice(0,10)}.pdf`;
+
+    savePdfBtn.disabled = true;
+    savePdfBtn.textContent = 'Saving PDF…';
+
+    html2pdf().set({
+      margin: 0,
+      filename: filename,
+      image: {type:'jpeg', quality:0.98},
+      html2canvas: {scale:2, useCORS:true},
+      jsPDF: {unit:'pt', format:'letter', orientation:'portrait'}
+    }).from(page).save().then(()=>{
+      template.style.display = 'none';
+      savePdfBtn.disabled = false;
+      savePdfBtn.textContent = 'Save PDF Report';
+    }).catch(()=>{
+      template.style.display = 'none';
+      savePdfBtn.disabled = false;
+      savePdfBtn.textContent = 'Save PDF Report';
+    });
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
